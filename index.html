@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dot v64.0 - Samet'in Asistanı</title>
+    
+    <title>Dot v65.0</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dot">
+    
+    <link rel="apple-touch-icon" href="https://pollinations.ai/p/Modern%20minimalist%20AI%20app%20icon%20with%20a%20stylized%20letter%20D%20in%20the%20center%2C%20cyan%20neon%20lines%20on%20a%20dark%20background%2C%20tech%20circuitry%20patterns%2C%20high%20resolution%2C%20rounded%20corners?width=512&height=512&nologo=true">
+    <link rel="icon" href="https://pollinations.ai/p/Modern%20minimalist%20AI%20app%20icon%20with%20a%20stylized%20letter%20D%20in%20the%20center%2C%20cyan%20neon%20lines%20on%20a%20dark%20background%2C%20tech%20circuitry%20patterns%2C%20high%20resolution%2C%20rounded%20corners?width=512&height=512&nologo=true">
+
     <style>
         :root { --bg: #000; --accent: #00f2ff; --text: #00f2ff; --msg-ai: #111; --header: #000; }
         .light-mode { --bg: #f0f2f5; --accent: #007bff; --text: #212529; --msg-ai: #fff; --header: #fff; }
@@ -19,8 +27,7 @@
         .ai { align-self: flex-start; background: var(--msg-ai); border: 1px solid #333; border-bottom-left-radius: 4px; }
         .ai-img { width: 100%; border-radius: 12px; margin-top: 10px; border: 1px solid var(--accent); }
 
-        /* Terminal Stili */
-        #terminal { display: none; position: fixed; top: 70px; right: 20px; width: 300px; height: 400px; background: rgba(0,0,0,0.9); border: 1px solid red; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; overflow-y: auto; z-index: 2000; border-radius: 8px; box-shadow: 0 0 20px rgba(255,0,0,0.3); }
+        #terminal { display: none; position: fixed; top: 70px; right: 20px; width: 300px; height: 400px; background: rgba(0,0,0,0.95); border: 1px solid red; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; overflow-y: auto; z-index: 2000; border-radius: 8px; box-shadow: 0 0 20px rgba(255,0,0,0.3); }
 
         #controls { position: fixed; bottom: 0; width: 100%; height: 85px; background: var(--header); border-top: 1px solid #333; display: flex; align-items: center; padding: 0 15px; z-index: 1000; }
         #inputBar { display: flex; gap: 10px; width: 100%; max-width: 1100px; margin: 0 auto; align-items: center; }
@@ -33,14 +40,14 @@
 <body>
 
 <div id="header">
-    <div style="font-weight:bold;">DOT <span style="font-size:12px; opacity:0.6;">v64</span></div>
+    <div style="font-weight:bold;">DOT <span style="font-size:12px; opacity:0.6;">v65.0</span></div>
     <div>
         <button onclick="document.body.classList.toggle('light-mode')" class="iconBtn" style="display:inline-flex; width:auto; padding:0 10px; border-radius:15px; font-size:14px;">🌓 TEMA</button>
         <button onclick="toggleTerminal()" class="iconBtn termBtn" style="display:inline-flex; width:auto; padding:0 10px; border-radius:15px; font-size:14px; margin-left:5px;">📟 TERM</button>
     </div>
 </div>
 
-<div id="terminal" id="termLogs"><b>--- DOT SYSTEM LOGS ---</b><br></div>
+<div id="terminal"><b>--- DOT SYSTEM LOGS ---</b><br></div>
 <div id="chat"></div>
 
 <div id="controls">
@@ -55,6 +62,7 @@
     const chat = document.getElementById('chat');
     const textInput = document.getElementById('textInput');
     const terminal = document.getElementById('terminal');
+    const GROQ_KEY = "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";
     
     function log(msg, type="INFO") {
         const time = new Date().toLocaleTimeString();
@@ -85,47 +93,41 @@
         if (!val) return;
         addMsg(val, 'user');
         textInput.value = "";
-        log(`User input: ${val}`);
+        log(`Input: ${val}`);
 
         const isImg = ["çiz", "oluştur", "yap", "resim", "görsel"].some(k => val.toLowerCase().includes(k));
 
         if (isImg) {
-            log("Image generation triggered", "PROCESS");
+            log("Drawing starts...", "PROCESS");
             addMsg("Hemen hazırlıyorum Samet.", "ai");
             const p = val.replace(/(çiz|oluştur|yap|bana|resim|görsel)/gi, "").trim();
             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=1024&height=1024&nologo=true&seed=${Math.random()}`;
             
             const img = new Image();
             img.src = url;
-            img.onload = () => { addMsg(url, "ai", true); log("Image loaded successfully"); };
-            img.onerror = () => { log("Image Load Failed", "ERROR"); addMsg("Görsel motoru hata verdi.", "ai"); };
+            img.onload = () => { addMsg(url, "ai", true); log("Image OK"); };
+            img.onerror = () => { log("Image Error", "ERROR"); addMsg("Hata verdi.", "ai"); };
         } else {
-            log("Groq API request sent", "API");
             try {
                 const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
-                    headers: { "Authorization": "Bearer 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", "Content-Type": "application/json" },
+                    headers: { "Authorization": `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
                     body: JSON.stringify({ 
                         model: "llama-3.3-70b-versatile", 
-                        messages: [{role:"system", content:"Sen Dot'sın. Samet'in (16, lise öğrencisi) şahsi yapay zekasısın. Onu iyi tanıyorsun. Kısa ve zekice konuş."}, {role:"user", content:val}] 
+                        messages: [{role:"system", content:"Sen Dot'sın. Samet'in şahsi yardımcısısın. 16 yaşında lise öğrencisi. Kısa ve net konuş."}, {role:"user", content:val}] 
                     })
                 });
                 const data = await res.json();
                 const reply = data.choices[0].message.content;
                 addMsg(reply, "ai");
                 speak(reply);
-                log("Response received from Groq");
-            } catch(e) { 
-                log(e.message, "ERROR");
-                addMsg("Bağlantı koptu.", "ai"); 
-            }
+            } catch(e) { log(e.message, "ERROR"); }
         }
     }
 
     document.getElementById('sendBtn').onclick = handle;
     textInput.onkeypress = (e) => { if(e.key === 'Enter') handle(); };
     document.getElementById('micBtn').onclick = () => {
-        log("Mic activated", "SYSTEM");
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         const rec = new SR(); rec.lang = 'tr-TR';
         rec.onresult = (e) => { textInput.value = e.results[0][0].transcript; handle(); };
@@ -133,8 +135,8 @@
     };
 
     window.onload = () => {
-        log("Dot OS 64.0 Initialized");
-        addMsg("Sistem çevrimiçi Samet. Dot göreve hazır.", "ai");
+        log("Dot OS Online");
+        addMsg("Dot v65.0 yüklendi. Ana ekrana eklediğinde ikon aktif olacak Samet.", "ai");
     };
 </script>
 </body>
