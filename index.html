@@ -2,29 +2,60 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jarvis v43.2 - Samet Sevgi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Jarvis v43.5 - Samet Sevgi Edition</title>
     <style>
-        :root { --bg: #000; --accent: #00f2ff; --text: #00f2ff; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; }
-        #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        #controls { background: #111; padding: 20px; border-top: 1px solid var(--accent); position: relative; }
-        #inputBar { display: flex; gap: 10px; }
-        #textInput { flex: 1; background: #222; border: 1px solid var(--accent); border-radius: 20px; padding: 10px 15px; color: #fff; outline: none; }
-        .iconBtn { background: var(--accent); border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 20px; }
-        .msg { padding: 10px; border-radius: 10px; border: 1px solid #00f2ff44; max-width: 80%; }
-        .user { align-self: flex-end; background: var(--accent); color: #000; }
-        .ai { align-self: flex-start; background: #000; }
+        :root { --bg: #000; --accent: #00f2ff; --chat-bg: #080808; --text: #00f2ff; --msg-ai: #111; }
+        .light-mode { --bg: #f8f9fa; --accent: #007bff; --chat-bg: #ffffff; --text: #212529; --msg-ai: #eef2f7; }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: 0.3s; }
+        
+        #header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--accent); }
+        .topBtn { background: var(--accent); border: none; color: #000; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; }
+        #designerTag { font-size: 10px; opacity: 0.8; letter-spacing: 1px; }
+
+        #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .msg { padding: 14px; border-radius: 15px; max-width: 82%; font-size: 14px; line-height: 1.5; border: 1px solid rgba(0,242,255,0.1); }
+        .user { align-self: flex-end; background: var(--accent); color: #000; font-weight: 600; }
+        .ai { align-self: flex-start; background: var(--msg-ai); }
+
+        #devPanel { display: none; background: #000; color: #0f0; height: 180px; border-top: 2px solid #333; padding: 10px; z-index: 100; overflow: hidden; }
+        #consoleOutput { height: 100px; overflow-y: auto; font-family: monospace; font-size: 10px; margin-bottom: 10px; border-bottom: 1px solid #222; }
+
+        #controls { background: var(--chat-bg); padding: 15px; border-top: 1px solid rgba(128,128,128,0.2); position: relative; }
+        #listeningIndicator { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--accent); opacity: 0.6; }
+
+        #inputBar { display: flex; gap: 10px; align-items: center; }
+        #textInput { flex: 1; background: rgba(128,128,128,0.08); border: 1px solid #444; border-radius: 20px; padding: 12px 18px; color: var(--text); outline: none; }
+        
+        .iconBtn { background: var(--accent); border: none; width: 46px; height: 46px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #000; }
+        #micBtn.active { background: #ff0044; box-shadow: 0 0 20px #ff0044; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% {transform: scale(1);} 50% {transform: scale(1.1);} }
     </style>
 </head>
 <body>
 
+<div id="header">
+    <button class="topBtn" onclick="toggleTheme()">🌓 TEMA</button>
+    <div id="designerTag">DESIGNED BY <b>SAMET SEVGİ</b></div>
+    <button class="topBtn" onclick="toggleDev()">🛠 DEV MOD</button>
+</div>
+
 <div id="chat"></div>
 
+<div id="devPanel">
+    <div id="consoleOutput">> Sistem başlatılıyor...</div>
+    <div style="display:flex; gap:5px;">
+        <button style="flex:1; font-size:10px;" onclick="injectCode()">KOD EKLE</button>
+        <button style="flex:1; font-size:10px;" onclick="generateNewVersion()">YENİ SÜRÜM</button>
+    </div>
+</div>
+
 <div id="controls">
+    <span id="listeningIndicator">📡 Hey Jarvis demenizi bekliyorum...</span>
     <div id="inputBar">
         <button id="micBtn" class="iconBtn">🎤</button>
-        <input type="text" id="textInput" placeholder="Samet Bey, dinliyorum..." autocomplete="off">
+        <input type="text" id="textInput" placeholder="Mesajınızı yazın..." autocomplete="off">
         <button id="sendBtn" class="iconBtn">🚀</button>
     </div>
 </div>
@@ -33,12 +64,90 @@
     const chat = document.getElementById('chat');
     const textInput = document.getElementById('textInput');
     const micBtn = document.getElementById('micBtn');
+    const consoleOutput = document.getElementById('consoleOutput');
+    const listeningIndicator = document.getElementById('listeningIndicator');
+    
+    let history = [];
+    let recognition;
+    let wakeWordRecognition;
+    let isRecording = false;
 
-    // API'ye gönderim fonksiyonu
-    async function send() {
-        const val = textInput.value.trim();
-        if(!val) return;
-        addMsg(val, 'user');
+    function log(msg) {
+        const div = document.createElement('div');
+        div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        consoleOutput.appendChild(div);
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    // --- SES TANIMA MOTORU (HEY JARVIS İÇİN) ---
+    function initWakeWord() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        wakeWordRecognition = new SpeechRecognition();
+        wakeWordRecognition.lang = 'tr-TR';
+        wakeWordRecognition.continuous = true;
+        wakeWordRecognition.interimResults = true;
+
+        wakeWordRecognition.onresult = (event) => {
+            if (isRecording) return;
+            let transcript = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                transcript += event.results[i][0].transcript.toLowerCase();
+            }
+            log("Dinleniyor: " + transcript);
+
+            // Daha hassas algılama için alternatif kelimeler eklendi
+            if (transcript.includes("jarvis") || transcript.includes("servis") || transcript.includes("hey")) {
+                log("!!! Tetiklendi !!!");
+                wakeWordRecognition.stop();
+                triggerJarvis();
+            }
+        };
+
+        wakeWordRecognition.onend = () => { if (!isRecording) wakeWordRecognition.start(); };
+        try { wakeWordRecognition.start(); } catch(e) { log("Mikrofon hatası."); }
+    }
+
+    function triggerJarvis() {
+        speak("Efendim Samet?");
+        setTimeout(startRecording, 1000);
+    }
+
+    function setupRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'tr-TR';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.onresult = (e) => {
+            let t = "";
+            for (let i = e.resultIndex; i < e.results.length; ++i) t += e.results[i][0].transcript;
+            textInput.value = t;
+        };
+    }
+
+    function startRecording() {
+        if (isRecording) return;
+        if (!recognition) setupRecognition();
+        isRecording = true;
+        textInput.value = "";
+        micBtn.classList.add('active');
+        listeningIndicator.innerText = "🔴 SİZİ DİNLİYORUM...";
+        try { recognition.start(); } catch(e) {}
+        setTimeout(() => {
+            isRecording = false;
+            micBtn.classList.remove('active');
+            recognition.stop();
+            listeningIndicator.innerText = "📡 Hey Jarvis demenizi bekliyorum...";
+            setTimeout(() => { if (textInput.value.trim()) sendToAPI(); }, 500);
+        }, 5000);
+    }
+
+    async function sendToAPI() {
+        const text = textInput.value.trim();
+        if (!text) return;
+        addMsg(text, 'user');
         textInput.value = "";
         try {
             const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -49,14 +158,22 @@
                 },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
-                    messages: [{role: "system", content: "Sen Samet Sevgi'nin Jarvis'isin."}, {role: "user", content: val}]
+                    messages: [{ role: "system", content: "Sen Samet Sevgi'nin tasarladığı Jarvis'sin." }, ...history, { role: "user", content: text }]
                 })
             });
             const data = await res.json();
             const reply = data.choices[0].message.content;
+            history.push({ role: "user", content: text }, { role: "assistant", content: reply });
             addMsg(reply, 'ai');
             speak(reply);
-        } catch(e) { addMsg("Hata oluştu kanka.", "ai"); }
+        } catch (e) { log("API Hatası!"); }
+    }
+
+    function speak(t) {
+        window.speechSynthesis.cancel();
+        const m = new SpeechSynthesisUtterance(t);
+        m.lang = 'tr-TR';
+        window.speechSynthesis.speak(m);
     }
 
     function addMsg(t, type) {
@@ -67,25 +184,18 @@
         chat.scrollTop = chat.scrollHeight;
     }
 
-    function speak(t) {
-        window.speechSynthesis.cancel();
-        const m = new SpeechSynthesisUtterance(t);
-        m.lang = 'tr-TR';
-        window.speechSynthesis.speak(m);
-    }
+    function toggleTheme() { document.body.classList.toggle('light-mode'); }
+    function toggleDev() { document.getElementById('devPanel').style.display = document.getElementById('devPanel').style.display === 'block' ? 'none' : 'block'; }
+    function injectCode() { const c = prompt("Kod:"); if(c) eval(c); }
+    function generateNewVersion() { addMsg("v44 hazırlanıyor...", "ai"); }
 
-    document.getElementById('sendBtn').onclick = send;
-    textInput.onkeypress = (e) => { if(e.key === 'Enter') send(); };
-    
-    // Basit mikrofon tetikleyici (v40 çekirdeği)
-    micBtn.onclick = () => {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const rec = new SR();
-        rec.lang = 'tr-TR';
-        micBtn.style.background = "red";
-        rec.onresult = (e) => { textInput.value = e.results[0][0].transcript; };
-        rec.onend = () => { micBtn.style.background = "#00f2ff"; setTimeout(send, 500); };
-        rec.start();
+    micBtn.onclick = startRecording;
+    document.getElementById('sendBtn').onclick = sendToAPI;
+    textInput.onkeypress = (e) => { if(e.key === 'Enter') sendToAPI(); };
+
+    window.onload = () => {
+        log("Sistem Hazır. Bir kez ekrana dokunun.");
+        document.body.onclick = () => { if(!wakeWordRecognition) initWakeWord(); };
     };
 </script>
 </body>
