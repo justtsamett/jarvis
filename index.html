@@ -3,81 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jarvis v51.0 - Samet Sevgi</title>
+    <title>Jarvis v53.0 - Samet Sevgi</title>
     <style>
-        :root { --bg: #000; --accent: #00f2ff; --chat-bg: #0a0a0a; --text: #00f2ff; --msg-ai: #111; }
-        .light-mode { --bg: #f0f2f5; --accent: #007bff; --chat-bg: #ffffff; --text: #1a1a1a; --msg-ai: #f0f0f0; }
+        :root { --bg: #000; --accent: #00f2ff; --text: #00f2ff; --msg-ai: #111; }
+        .light-mode { --bg: #f8f9fa; --accent: #007bff; --text: #212529; --msg-ai: #e9ecef; }
 
-        * { box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            height: 100vh; 
-            height: -webkit-fill-available;
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-            transition: 0.3s; 
-        }
-        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
+
         #header { 
-            flex-shrink: 0; 
-            padding: 10px 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid var(--accent); 
-            background: rgba(0,242,255,0.05); 
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px;
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 20px; border-bottom: 1px solid var(--accent);
+            background: var(--bg); z-index: 1000;
         }
 
         #chat { 
-            flex: 1; /* Ekranın kalan tüm boşluğunu kaplar */
-            overflow-y: auto; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            -webkit-overflow-scrolling: touch;
+            position: absolute; top: 60px; bottom: 80px; left: 0; width: 100%;
+            overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px;
+            padding-bottom: 120px;
         }
         
-        .msg { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 14px; line-height: 1.5; }
+        .msg { padding: 14px 18px; border-radius: 20px; max-width: 85%; font-size: 15px; }
         .user { align-self: flex-end; background: var(--accent); color: #000; font-weight: bold; }
         .ai { align-self: flex-start; background: var(--msg-ai); border: 1px solid rgba(128,128,128,0.2); }
 
-        .image-container { margin-top: 10px; border: 2px solid var(--accent); border-radius: 12px; overflow: hidden; background: #000; max-width: 100%; }
+        .image-container { margin-top: 10px; border: 2px solid var(--accent); border-radius: 12px; overflow: hidden; background: #000; }
         .ai-img { width: 100%; height: auto; display: block; }
 
         #controls { 
-            flex-shrink: 0; /* Alt barın ezilmesini engeller */
-            background: var(--chat-bg); 
-            padding: 10px 15px; 
-            padding-bottom: env(safe-area-inset-bottom, 15px); /* iPhone/iPad çentiği için */
-            border-top: 1px solid rgba(128,128,128,0.2); 
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 80px;
+            background: var(--bg); border-top: 1px solid rgba(128,128,128,0.3);
+            display: flex; align-items: center; padding: 0 15px; z-index: 1000;
         }
 
-        #inputBar { display: flex; gap: 8px; align-items: center; max-width: 1000px; margin: 0 auto; }
-        #textInput { 
-            flex: 1; 
-            background: rgba(128,128,128,0.1); 
-            border: 1px solid rgba(128,128,128,0.3); 
-            border-radius: 20px; 
-            padding: 10px 15px; 
-            color: var(--text); 
-            outline: none; 
-            font-size: 16px; /* Mobilde zoom yapmaması için en az 16px */
-        }
-
-        .iconBtn { background: var(--accent); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #000; flex-shrink: 0; }
-        .theme-toggle { background: transparent; border: 1px solid var(--accent); color: var(--text); padding: 4px 10px; border-radius: 10px; font-size: 10px; cursor: pointer; }
+        #inputBar { display: flex; gap: 10px; align-items: center; width: 100%; max-width: 1100px; margin: 0 auto; }
+        #textInput { flex: 1; height: 50px; background: rgba(128,128,128,0.15); border: 1px solid var(--accent); border-radius: 25px; padding: 0 20px; color: var(--text); outline: none; font-size: 16px; }
+        .iconBtn { background: var(--accent); border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #000; }
     </style>
 </head>
-<body>
-
-<div id="header">
-    <div style="font-size: 10px;"><b>SAMET SEVGİ</b> JARVIS</div>
-    <button class="theme-toggle" onclick="toggleTheme()">🌓 TEMA</button>
+<body onclick="activateAudio()"> <div id="header">
+    <div style="font-weight: bold;">SAMET SEVGİ | JARVIS</div>
+    <button onclick="document.body.classList.toggle('light-mode')" style="background:none; border:1px solid var(--accent); color:var(--accent); border-radius:15px; padding:5px 10px;">🌓 TEMA</button>
 </div>
 
 <div id="chat"></div>
@@ -85,7 +52,7 @@
 <div id="controls">
     <div id="inputBar">
         <button id="micBtn" class="iconBtn">🎤</button>
-        <input type="text" id="textInput" placeholder="Mesajınızı yazın..." autocomplete="off">
+        <input type="text" id="textInput" placeholder="Yazın veya konuşun..." autocomplete="off">
         <button id="sendBtn" class="iconBtn">🚀</button>
     </div>
 </div>
@@ -94,8 +61,28 @@
     const chat = document.getElementById('chat');
     const textInput = document.getElementById('textInput');
     const sendBtn = document.getElementById('sendBtn');
-    
-    function toggleTheme() { document.body.classList.toggle('light-mode'); }
+    let audioActivated = false;
+
+    // Ses motorunu aktifleştirme (Kullanıcı etkileşimi şart)
+    function activateAudio() {
+        if (!audioActivated) {
+            const synth = window.speechSynthesis;
+            const utter = new SpeechSynthesisUtterance("");
+            synth.speak(utter);
+            audioActivated = true;
+            console.log("Ses motoru hazır.");
+        }
+    }
+
+    function speak(text) {
+        if (!text) return;
+        window.speechSynthesis.cancel(); // Önceki sesi sustur
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'tr-TR';
+        utter.rate = 1.0;
+        utter.pitch = 1.0;
+        window.speechSynthesis.speak(utter);
+    }
 
     function addMsg(text, type, isImg = false) {
         const div = document.createElement('div');
@@ -116,20 +103,26 @@
         textInput.value = "";
 
         if(val.toLowerCase().includes("çiz") || val.toLowerCase().includes("oluştur")) {
-            addMsg("Çiziliyor...", "ai");
+            const reply = "Hemen çiziyorum Samet bey.";
+            addMsg(reply, "ai");
+            speak(reply);
             const seed = Math.floor(Math.random() * 1000000);
             const url = `https://pollinations.ai/p/${encodeURIComponent(val)}?width=1024&height=1024&seed=${seed}&nologo=true`;
-            setTimeout(() => addMsg(url, "ai", true), 500);
+            setTimeout(() => addMsg(url, "ai", true), 1000);
         } else {
             try {
                 const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: { "Authorization": "Bearer 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", "Content-Type": "application/json" },
-                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{role:"system", content:"Sen Jarvis'sin."}, {role:"user", content:val}] })
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{role:"system", content:"Sen Jarvis'sin. Çok kısa cevap ver."}, {role:"user", content:val}] })
                 });
                 const data = await res.json();
-                addMsg(data.choices[0].message.content, 'ai');
-            } catch(e) { addMsg("Hata oluştu.", "ai"); }
+                const reply = data.choices[0].message.content;
+                addMsg(reply, 'ai');
+                speak(reply); // YANITI SESLİ OKU
+            } catch(e) { 
+                addMsg("Hata oluştu.", "ai"); 
+            }
         }
     }
 
@@ -137,13 +130,16 @@
     textInput.onkeypress = (e) => { if(e.key === 'Enter') handle(); };
     
     document.getElementById('micBtn').onclick = () => {
+        activateAudio(); // Mikrofona basınca ses motorunu da aç
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         const rec = new SR(); rec.lang = 'tr-TR';
         rec.onresult = (e) => { textInput.value = e.results[0][0].transcript; handle(); };
         rec.start();
     };
 
-    window.onload = () => addMsg("Sistem tablet modunda aktif Samet bey.", "ai");
+    window.onload = () => {
+        addMsg("Sistem çevrimiçi Samet bey. Sesli yanıtları duymak için ekrana bir kez dokunun.", "ai");
+    };
 </script>
 </body>
 </html>
