@@ -2,75 +2,91 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jarvis v48.0 - Samet Sevgi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Jarvis v51.0 - Samet Sevgi</title>
     <style>
-        :root { --bg: #000; --accent: #00f2ff; --text: #00f2ff; --msg-ai: #111; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --bg: #000; --accent: #00f2ff; --chat-bg: #0a0a0a; --text: #00f2ff; --msg-ai: #111; }
+        .light-mode { --bg: #f0f2f5; --accent: #007bff; --chat-bg: #ffffff; --text: #1a1a1a; --msg-ai: #f0f0f0; }
+
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            height: 100vh; 
+            height: -webkit-fill-available;
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            transition: 0.3s; 
+        }
         
-        /* Header */
-        #header { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--accent); background: rgba(0,242,255,0.05); }
-        #designerTag { font-size: 10px; letter-spacing: 1px; }
+        #header { 
+            flex-shrink: 0; 
+            padding: 10px 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid var(--accent); 
+            background: rgba(0,242,255,0.05); 
+        }
 
-        /* Sohbet Alanı */
-        #chat { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { padding: 12px 16px; border-radius: 15px; max-width: 85%; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
-        .user { align-self: flex-end; background: var(--accent); color: #000; font-weight: bold; border-bottom-right-radius: 2px; }
-        .ai { align-self: flex-start; background: var(--msg-ai); border: 1px solid #222; border-bottom-left-radius: 2px; }
-
-        /* Resim Alanı */
-        .image-container { margin-top: 10px; border: 1px solid var(--accent); border-radius: 10px; overflow: hidden; background: #000; }
-        .ai-img { width: 100%; display: block; height: auto; }
-
-        /* Kontrol Paneli (Alt Kısım) */
-        #controls { background: #080808; padding: 15px; border-top: 1px solid #222; }
-        #inputBar { display: flex; gap: 10px; align-items: center; max-width: 800px; margin: 0 auto; width: 100%; }
+        #chat { 
+            flex: 1; /* Ekranın kalan tüm boşluğunu kaplar */
+            overflow-y: auto; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            -webkit-overflow-scrolling: touch;
+        }
         
+        .msg { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 14px; line-height: 1.5; }
+        .user { align-self: flex-end; background: var(--accent); color: #000; font-weight: bold; }
+        .ai { align-self: flex-start; background: var(--msg-ai); border: 1px solid rgba(128,128,128,0.2); }
+
+        .image-container { margin-top: 10px; border: 2px solid var(--accent); border-radius: 12px; overflow: hidden; background: #000; max-width: 100%; }
+        .ai-img { width: 100%; height: auto; display: block; }
+
+        #controls { 
+            flex-shrink: 0; /* Alt barın ezilmesini engeller */
+            background: var(--chat-bg); 
+            padding: 10px 15px; 
+            padding-bottom: env(safe-area-inset-bottom, 15px); /* iPhone/iPad çentiği için */
+            border-top: 1px solid rgba(128,128,128,0.2); 
+        }
+
+        #inputBar { display: flex; gap: 8px; align-items: center; max-width: 1000px; margin: 0 auto; }
         #textInput { 
             flex: 1; 
-            background: #111; 
-            border: 1px solid #333; 
-            border-radius: 25px; 
-            padding: 12px 18px; 
-            color: #fff; 
+            background: rgba(128,128,128,0.1); 
+            border: 1px solid rgba(128,128,128,0.3); 
+            border-radius: 20px; 
+            padding: 10px 15px; 
+            color: var(--text); 
             outline: none; 
-            font-size: 14px;
+            font-size: 16px; /* Mobilde zoom yapmaması için en az 16px */
         }
-        #textInput:focus { border-color: var(--accent); }
 
-        .iconBtn { 
-            background: var(--accent); 
-            border: none; 
-            width: 44px; 
-            height: 44px; 
-            border-radius: 50%; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 18px; 
-            color: #000; 
-            transition: 0.2s;
-        }
-        .iconBtn:active { transform: scale(0.9); }
-        #micBtn.listening { background: #ff0044; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(255,0,68,0.7);} 70% {box-shadow: 0 0 0 10px rgba(255,0,68,0);} 100% {box-shadow: 0 0 0 0 rgba(255,0,68,0);} }
+        .iconBtn { background: var(--accent); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #000; flex-shrink: 0; }
+        .theme-toggle { background: transparent; border: 1px solid var(--accent); color: var(--text); padding: 4px 10px; border-radius: 10px; font-size: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div id="designerTag">BY <b>SAMET SEVGİ</b></div>
-    <div style="font-weight: bold; font-size: 12px; color: var(--accent);">JARVIS v48.0</div>
+    <div style="font-size: 10px;"><b>SAMET SEVGİ</b> JARVIS</div>
+    <button class="theme-toggle" onclick="toggleTheme()">🌓 TEMA</button>
 </div>
 
 <div id="chat"></div>
 
 <div id="controls">
     <div id="inputBar">
-        <button id="micBtn" class="iconBtn" title="Sesli Komut">🎤</button>
-        <input type="text" id="textInput" placeholder="Mesaj yazın veya 'çiz' deyin..." autocomplete="off">
-        <button id="sendBtn" class="iconBtn" title="Gönder">🚀</button>
+        <button id="micBtn" class="iconBtn">🎤</button>
+        <input type="text" id="textInput" placeholder="Mesajınızı yazın..." autocomplete="off">
+        <button id="sendBtn" class="iconBtn">🚀</button>
     </div>
 </div>
 
@@ -78,108 +94,56 @@
     const chat = document.getElementById('chat');
     const textInput = document.getElementById('textInput');
     const sendBtn = document.getElementById('sendBtn');
-    const micBtn = document.getElementById('micBtn');
     
-    let history = [];
+    function toggleTheme() { document.body.classList.toggle('light-mode'); }
 
-    function addMsg(text, type, imageSrc = null) {
+    function addMsg(text, type, isImg = false) {
         const div = document.createElement('div');
         div.className = `msg ${type}`;
-        
-        if (imageSrc) {
-            div.innerHTML = `<div>İstediğiniz görsel hazır Samet bey:</div>
-                             <div class="image-container"><img src="${imageSrc}" class="ai-img" alt="Görsel"></div>`;
+        if(isImg) {
+            div.innerHTML = `<div class="image-container"><img src="${text}" class="ai-img" onload="chat.scrollTop = chat.scrollHeight"></div>`;
         } else {
             div.innerText = text;
         }
-        
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
     }
 
-    function speak(text) {
-        window.speechSynthesis.cancel();
-        const m = new SpeechSynthesisUtterance(text);
-        m.lang = 'tr-TR';
-        window.speechSynthesis.speak(m);
-    }
-
-    async function handleRequest() {
-        const input = textInput.value.trim();
-        if (!input) return;
-
-        addMsg(input, 'user');
+    async function handle() {
+        const val = textInput.value.trim();
+        if(!val) return;
+        addMsg(val, 'user');
         textInput.value = "";
 
-        const lowInp = input.toLowerCase();
-        
-        // --- GÖRSEL ÇİZME MANTIĞI ---
-        if (lowInp.includes("çiz") || lowInp.includes("oluştur") || lowInp.includes("yap")) {
-            const prompt = input.replace(/(resim|çiz|yap|bana|bir|görsel|fotoğraf|oluştur)/gi, "").trim();
-            addMsg("Görseliniz Samet Bey için tasarlanıyor...", "ai");
-            speak("Hemen çiziyorum.");
-
+        if(val.toLowerCase().includes("çiz") || val.toLowerCase().includes("oluştur")) {
+            addMsg("Çiziliyor...", "ai");
             const seed = Math.floor(Math.random() * 1000000);
-            // Pollinations v2 - nologo ve direct render aktif
-            const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${seed}&nologo=true`;
-
-            const img = new Image();
-            img.src = imageUrl;
-            img.onload = () => {
-                // Mevcut mesaj kutusuna resmi ekle
-                const aiMsgs = document.querySelectorAll('.ai');
-                const lastAi = aiMsgs[aiMsgs.length - 1];
-                lastAi.innerHTML = `<div>Görseliniz hazır Samet bey:</div><div class="image-container"><img src="${imageUrl}" class="ai-img"></div>`;
-                speak("Görseliniz hazır.");
-            };
-        } 
-        // --- NORMAL SOHBET MANTIĞI ---
-        else {
+            const url = `https://pollinations.ai/p/${encodeURIComponent(val)}?width=1024&height=1024&seed=${seed}&nologo=true`;
+            setTimeout(() => addMsg(url, "ai", true), 500);
+        } else {
             try {
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
-                    headers: { 
-                        "Authorization": "Bearer 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",
-                        "Content-Type": "application/json" 
-                    },
-                    body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
-                        messages: [{ role: "system", content: "Sen Samet Sevgi'nin asistanı Jarvis'sin. Çok kısa ve zeki cevap ver." }, ...history, { role: "user", content: input }]
-                    })
+                    headers: { "Authorization": "Bearer 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", "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{role:"system", content:"Sen Jarvis'sin."}, {role:"user", content:val}] })
                 });
-                const data = await response.json();
-                const reply = data.choices[0].message.content;
-                history.push({ role: "user", content: input }, { role: "assistant", content: reply });
-                addMsg(reply, 'ai');
-                speak(reply);
-            } catch (e) {
-                addMsg("Bağlantı hatası efendim.", "ai");
-            }
+                const data = await res.json();
+                addMsg(data.choices[0].message.content, 'ai');
+            } catch(e) { addMsg("Hata oluştu.", "ai"); }
         }
     }
 
-    // Buton ve Klavye Olayları
-    sendBtn.onclick = handleRequest;
-    textInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleRequest(); });
-
-    // Mikrofon Kontrolü
-    micBtn.onclick = () => {
+    sendBtn.onclick = handle;
+    textInput.onkeypress = (e) => { if(e.key === 'Enter') handle(); };
+    
+    document.getElementById('micBtn').onclick = () => {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if(!SR) return alert("Tarayıcınız ses tanımayı desteklemiyor.");
-        
-        const rec = new SR();
-        rec.lang = 'tr-TR';
-        
-        rec.onstart = () => { micBtn.classList.add('listening'); };
-        rec.onresult = (e) => { textInput.value = e.results[0][0].transcript; };
-        rec.onend = () => { 
-            micBtn.classList.remove('listening'); 
-            if(textInput.value) handleRequest(); 
-        };
+        const rec = new SR(); rec.lang = 'tr-TR';
+        rec.onresult = (e) => { textInput.value = e.results[0][0].transcript; handle(); };
         rec.start();
     };
 
-    window.onload = () => { addMsg("Sistem çevrimiçi Samet bey. Ne istersiniz?", "ai"); };
+    window.onload = () => addMsg("Sistem tablet modunda aktif Samet bey.", "ai");
 </script>
 </body>
 </html>
