@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>J.A.R.V.I.S. Ultimate</title>
+    <title>J.A.R.V.I.S. Core V4</title>
     <style>
-        body { background: #050505; color: #00d4ff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
+        body { background: #050505; color: #00d4ff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; }
         .circle { width: 250px; height: 250px; border: 5px solid #00d4ff; border-radius: 50%; box-shadow: 0 0 50px #00d4ff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        #status { margin-top: 20px; font-size: 1.2em; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 80%; }
+        #status { margin-top: 25px; font-size: 1.1em; letter-spacing: 1px; text-align: center; color: #00d4ff; text-shadow: 0 0 10px #00d4ff; }
     </style>
 </head>
 <body>
     <div class="circle" id="core"><h2>J.A.R.V.I.S.</h2></div>
-    <div id="status">SİSTEM HAZIR, SİZİ DİNLİYORUM EFENDİM</div>
+    <div id="status">SİSTEMİ UYANDIRMAK İÇİN DAİREYE DOKUNUN</div>
 
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // API Anahtarların
-        const API_KEY = "AIzaSyAVL6WbHqTRlkK_RMBF7pq9VaWOgnyMyPE";
+        // Yeni API Anahtarın ve ElevenLabs Bilgilerin
+        const API_KEY = "AIzaSyA520ougNutYRwG_R96VI8QGCwItl1UeZk";
         const ELEVEN_KEY = "sk_c570b06ce12fc5dc0e6965a590763b5984e0e86a7462099a";
         const VOICE_ID = "JBFqnCBsd6RMkjVDRZzb";
 
@@ -26,10 +26,14 @@
         const status = document.getElementById('status');
         const core = document.getElementById('core');
 
-        // Tarayıcı Ses Tanıma (Senin sesini duyması için)
+        // Ses Tanıma Ayarları
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            status.innerText = "TARAYICI SES TANIMAYI DESTEKLEMİYOR";
+        }
         const recognition = new SpeechRecognition();
         recognition.lang = 'tr-TR';
+        recognition.continuous = false;
 
         async function speak(text) {
             status.innerText = "CEVAP VERİLİYOR...";
@@ -39,25 +43,44 @@
                     headers: { 'xi-api-key': ELEVEN_KEY, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: text, model_id: "eleven_multilingual_v2" })
                 });
+                if (!response.ok) throw new Error("Ses motoru yanıt vermedi.");
                 const blob = await response.blob();
                 const audio = new Audio(URL.createObjectURL(blob));
-                audio.play();
-                audio.onended = () => { status.innerText = "DİNLENİYOR..."; recognition.start(); };
-            } catch (e) { status.innerText = "SES MOTORU HATASI"; }
+                await audio.play();
+                audio.onended = () => { status.innerText = "DİNLENİYOR..."; };
+            } catch (e) { 
+                status.innerText = "SES HATASI: " + e.message;
+            }
         }
 
-        core.onclick = () => { recognition.start(); status.innerText = "SİZİ DİNLİYORUM..."; };
+        core.onclick = () => {
+            try {
+                recognition.start();
+                status.innerText = "SİZİ DİNLİYORUM EFENDİM...";
+            } catch (e) {
+                console.log("Zaten dinliyor.");
+            }
+        };
 
         recognition.onresult = async (event) => {
             const userText = event.results[0][0].transcript;
-            status.innerText = "DÜŞÜNÜLÜYOR: " + userText;
+            status.innerText = "İŞLENİYOR: " + userText;
             
             try {
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                // Gemini 2.0 Flash Kullanımı
+                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
                 const result = await model.generateContent(userText);
                 const text = result.response.text();
-                speak(text);
-            } catch (error) { status.innerText = "ZEKA ÇEKİRDEĞİ HATASI"; }
+                
+                await speak(text);
+            } catch (error) { 
+                console.error(error);
+                status.innerText = "ZEKA HATASI: " + error.message; // Hatayı direkt ekrana yazdırıyoruz
+            }
+        };
+
+        recognition.onerror = (event) => {
+            status.innerText = "MİKROFON HATASI: " + event.error;
         };
     </script>
 </body>
