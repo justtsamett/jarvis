@@ -2,79 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S. Interface</title>
+    <title>J.A.R.V.I.S. Voice Core</title>
     <style>
-        body { 
-            background-color: #050505; 
-            color: #00d4ff; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0;
-            overflow: hidden;
-        }
-        .jarvis-container {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .circle {
-            width: 250px;
-            height: 250px;
-            border: 4px solid #00d4ff;
-            border-radius: 50%;
-            box-shadow: 0 0 50px #00d4ff, inset 0 0 30px #00d4ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            animation: pulse 2s infinite ease-in-out;
-            transition: 0.3s;
-        }
-        .circle:hover {
-            box-shadow: 0 0 80px #00d4ff, inset 0 0 50px #00d4ff;
-            transform: scale(1.02);
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.08); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
-        .status-text {
-            margin-top: 30px;
-            letter-spacing: 4px;
-            font-weight: bold;
-            text-shadow: 0 0 10px #00d4ff;
-            text-transform: uppercase;
-        }
+        body { background: #050505; color: #00d4ff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .circle { width: 250px; height: 250px; border: 5px solid #00d4ff; border-radius: 50%; box-shadow: 0 0 50px #00d4ff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .circle:active { transform: scale(0.95); box-shadow: 0 0 80px #00d4ff; }
+        #status { margin-top: 20px; font-size: 1.2em; text-transform: uppercase; letter-spacing: 2px; }
     </style>
 </head>
 <body>
+    <div class="circle" id="main-core"><h2>J.A.R.V.I.S.</h2></div>
+    <div id="status">Systems Online, Sir.</div>
 
-    <div class="jarvis-container">
-        <div class="circle" onclick="startCommand()">
-            <h2 style="letter-spacing: 2px;">J.A.R.V.I.S.</h2>
-        </div>
-    </div>
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-    <div class="status-text" id="status">Systems Online, Sir</div>
+        const API_KEY = "AIzaSyAVL6WbHqTRlkK_RMBF7pq9VaWOgnyMyPE"; // Gemini
+        const ELEVEN_KEY = "sk_c570b06ce12fc5dc0e6965a590763b5984e0e86a7462099a"; // ElevenLabs
+        const VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"; // Karizmatik Ses
 
-    <script>
-        function startCommand() {
-            const command = prompt("Awaiting your command, Sir:");
-            if (command) {
-                document.getElementById('status').innerText = "Processing Command...";
-                // Replit veya yerel sunucun çalışıyorsa buraya bağlayacağız
-                alert("Command received, Sir: " + command);
-                document.getElementById('status').innerText = "Systems Online, Sir";
-            }
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const status = document.getElementById('status');
+
+        async function speak(text) {
+            status.innerText = "Speaking...";
+            const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+                method: 'POST',
+                headers: { 'xi-api-key': ELEVEN_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text, model_id: "eleven_multilingual_v2" })
+            });
+            const blob = await response.blob();
+            const audio = new Audio(URL.createObjectURL(blob));
+            audio.play();
+            audio.onended = () => status.innerText = "Systems Standby...";
         }
-    </script>
 
+        document.getElementById('main-core').onclick = async () => {
+            const promptStr = prompt("Sir?");
+            if (!promptStr) return;
+
+            status.innerText = "Analyzing...";
+            try {
+                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+                const result = await model.generateContent(promptStr);
+                const text = result.response.text();
+                
+                await speak(text); // Cevabı seslendir
+            } catch (error) {
+                status.innerText = "Error in Core.";
+                console.error(error);
+            }
+        };
+    </script>
 </body>
 </html>
