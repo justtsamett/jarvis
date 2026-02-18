@@ -2,17 +2,17 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>J.A.R.V.I.S. Stable V5</title>
+    <title>J.A.R.V.I.S. Core V6</title>
     <style>
         body { background: #050505; color: #00d4ff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
         .circle { width: 250px; height: 250px; border: 5px solid #00d4ff; border-radius: 50%; box-shadow: 0 0 50px #00d4ff; display: flex; align-items: center; justify-content: center; cursor: pointer; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        #status { margin-top: 25px; font-size: 1em; text-align: center; color: #00d4ff; width: 80%; line-height: 1.5; }
+        #status { margin-top: 25px; font-size: 1.1em; text-align: center; color: #00d4ff; text-shadow: 0 0 10px #00d4ff; }
     </style>
 </head>
 <body>
     <div class="circle" id="core"><h2>J.A.R.V.I.S.</h2></div>
-    <div id="status">DAİREYE DOKUNUN VE KONUŞUN EFENDİM</div>
+    <div id="status">SİSTEMİ UYANDIRMAK İÇİN DAİREYE DOKUNUN</div>
 
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
@@ -40,14 +40,14 @@
                 });
                 const blob = await response.blob();
                 const audio = new Audio(URL.createObjectURL(blob));
-                audio.play();
-                audio.onended = () => { status.innerText = "SİZİ DİNLİYORUM..."; };
-            } catch (e) { status.innerText = "SES HATASI OLUŞTU"; }
+                await audio.play();
+                audio.onended = () => { status.innerText = "DİNLENİYOR..."; };
+            } catch (e) { status.innerText = "SES HATASI: " + e.message; }
         }
 
-        core.onclick = () => { 
-            recognition.start(); 
-            status.innerText = "DİNLENİYOR..."; 
+        core.onclick = () => {
+            recognition.start();
+            status.innerText = "SİZİ DİNLİYORUM EFENDİM...";
         };
 
         recognition.onresult = async (event) => {
@@ -55,7 +55,7 @@
             status.innerText = "DÜŞÜNÜLÜYOR: " + userText;
             
             try {
-                // MODELİ 1.5 FLASH OLARAK GÜNCELLEDİK (HATAYI ÇÖZEN KISIM)
+                // MODELİ "gemini-1.5-flash" OLARAK SABİTLEDİK
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 const result = await model.generateContent(userText);
                 const response = await result.response;
@@ -63,7 +63,8 @@
                 
                 await speak(text);
             } catch (error) { 
-                status.innerText = "HATA: " + error.message; 
+                console.error(error);
+                status.innerText = "ZEKA HATASI: " + error.message;
             }
         };
     </script>
