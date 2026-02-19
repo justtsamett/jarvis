@@ -2,18 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S. OS</title>
+    <title>J.A.R.V.I.S. Alpha</title>
     <style>
-        body { background: #050505; color: #00d4ff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #050505; color: #00d4ff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
         .circle { width: 250px; height: 250px; border: 4px solid #00d4ff; border-radius: 50%; box-shadow: 0 0 50px #00d4ff; display: flex; align-items: center; justify-content: center; cursor: pointer; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        #status { margin-top: 30px; font-size: 1rem; letter-spacing: 2px; text-align: center; color: #00d4ff; text-transform: uppercase; }
+        #status { margin-top: 30px; font-size: 1rem; letter-spacing: 2px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="circle" id="core"><h2>J.A.R.V.I.S.</h2></div>
-    <div id="status">TAP TO WAKE UP, SIR</div>
+    <div id="status">WAKE UP THE SYSTEMS, SIR</div>
 
     <script>
         const status = document.getElementById('status');
@@ -25,31 +24,29 @@
         recognition.lang = 'en-US';
 
         async function speak(text) {
-            // WhatsApp komutunu kontrol et
+            // WhatsApp Tetikleyici
             if (text.includes("[ACTION:OPEN_WHATSAPP]")) {
                 text = text.replace("[ACTION:OPEN_WHATSAPP]", "");
-                window.location.href = "whatsapp://"; // WhatsApp'ı tetikler
+                window.location.href = "whatsapp://";
             }
 
-            status.innerText = "J.A.R.V.I.S. IS SPEAKING...";
-            try {
-                const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
-                    method: 'POST',
-                    headers: { 'xi-api-key': ELEVEN_KEY, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text, model_id: "eleven_multilingual_v2" })
-                });
-                const blob = await response.blob();
-                const audio = new Audio(URL.createObjectURL(blob));
-                await audio.play();
-                audio.onended = () => { status.innerText = "LISTENING, SIR..."; recognition.start(); };
-            } catch (e) { status.innerText = "AUDIO ERROR"; }
+            status.innerText = "J.A.R.V.I.S. SPEAKING...";
+            const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+                method: 'POST',
+                headers: { 'xi-api-key': ELEVEN_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text, model_id: "eleven_multilingual_v2" })
+            });
+            const blob = await response.blob();
+            const audio = new Audio(URL.createObjectURL(blob));
+            audio.play();
+            audio.onended = () => { status.innerText = "LISTENING, SIR..."; recognition.start(); };
         }
 
         core.onclick = () => { recognition.start(); status.innerText = "LISTENING, SIR..."; };
 
         recognition.onresult = async (event) => {
             const userText = event.results[0][0].transcript;
-            status.innerText = "THINKING...";
+            status.innerText = "PROCESSING...";
             try {
                 const response = await fetch("/api/ask", {
                     method: "POST",
